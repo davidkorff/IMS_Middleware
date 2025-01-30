@@ -3,6 +3,7 @@ using System;
 using ImsMonitoring.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ImsMonitoring.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250116063224_AddImsInstances")]
+    partial class AddImsInstances
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,55 +101,6 @@ namespace ImsMonitoring.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("ImsMonitoring.Models.ExternalSystem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Version")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExternalSystems");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("2afca612-ef87-4f13-8016-87a7d8dba551"),
-                            CreatedAt = new DateTime(2025, 1, 24, 18, 55, 27, 842, DateTimeKind.Utc).AddTicks(7831),
-                            Description = "AIM Invoicing Platform v1",
-                            IsActive = true,
-                            Name = "AIM",
-                            Version = "1.0"
-                        },
-                        new
-                        {
-                            Id = new Guid("8cd5368a-b51e-4c92-8aba-ab7a53fa57b1"),
-                            CreatedAt = new DateTime(2025, 1, 24, 18, 55, 27, 842, DateTimeKind.Utc).AddTicks(7837),
-                            Description = "AIM Invoicing Platform v2",
-                            IsActive = true,
-                            Name = "AIM",
-                            Version = "2.0"
-                        });
-                });
-
             modelBuilder.Entity("ImsMonitoring.Models.ImsInstance", b =>
                 {
                     b.Property<Guid>("Id")
@@ -191,52 +145,6 @@ namespace ImsMonitoring.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ImsInstances");
-                });
-
-            modelBuilder.Entity("ImsMonitoring.Models.ImsInstanceConnection", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ApiKey")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ConnectionString")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ExternalSystemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ImsInstanceId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastSuccessfulConnection")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Password")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Username")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExternalSystemId");
-
-                    b.HasIndex("ImsInstanceId");
-
-                    b.ToTable("ImsInstanceConnections");
                 });
 
             modelBuilder.Entity("ImsMonitoring.Models.Submission", b =>
@@ -419,25 +327,6 @@ namespace ImsMonitoring.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ImsMonitoring.Models.ImsInstanceConnection", b =>
-                {
-                    b.HasOne("ImsMonitoring.Models.ExternalSystem", "ExternalSystem")
-                        .WithMany("Connections")
-                        .HasForeignKey("ExternalSystemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ImsMonitoring.Models.ImsInstance", "ImsInstance")
-                        .WithMany("Connections")
-                        .HasForeignKey("ImsInstanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ExternalSystem");
-
-                    b.Navigation("ImsInstance");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -492,16 +381,6 @@ namespace ImsMonitoring.Migrations
             modelBuilder.Entity("ImsMonitoring.Models.ApplicationUser", b =>
                 {
                     b.Navigation("ImsInstances");
-                });
-
-            modelBuilder.Entity("ImsMonitoring.Models.ExternalSystem", b =>
-                {
-                    b.Navigation("Connections");
-                });
-
-            modelBuilder.Entity("ImsMonitoring.Models.ImsInstance", b =>
-                {
-                    b.Navigation("Connections");
                 });
 #pragma warning restore 612, 618
         }

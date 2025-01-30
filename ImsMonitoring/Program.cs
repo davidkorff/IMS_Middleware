@@ -71,6 +71,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Add this line to map your controllers
+app.MapControllers();
+
 // Auth endpoints
 app.MapPost("/api/auth/signup", async (ApplicationDbContext db, SignupRequest request) =>
 {

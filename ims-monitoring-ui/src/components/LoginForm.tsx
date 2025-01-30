@@ -1,44 +1,36 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  TextField, 
-  Button, 
-  Typography, 
-  Paper,
-  Alert,
-  Link 
-} from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Box, TextField, Button, Typography, Paper, Alert } from '@mui/material';
 import { api } from '../api/client';
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     try {
-      const response = await api.post('/auth/login', {
-        email,
-        password
-      });
-
-      // Store the token in localStorage
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        // Navigate to dashboard on successful login
-        navigate('/dashboard');
-      } else {
-        setError('Invalid login response');
-      }
+      const response = await api.post('/auth/login', formData);
+      localStorage.setItem('token', response.data.token);
+      navigate('/dashboard');
     } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.response?.data || 'Invalid credentials');
+      console.error('Login failed:', err);
+      setError(err.response?.data || 'Login failed');
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   return (
@@ -60,7 +52,7 @@ export default function LoginForm() {
         }}
       >
         <Typography variant="h5" gutterBottom align="center">
-          Sign In
+          Login
         </Typography>
 
         {error && (
@@ -73,18 +65,20 @@ export default function LoginForm() {
           <TextField
             fullWidth
             label="Email"
+            name="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={handleChange}
             margin="normal"
             required
           />
           <TextField
             fullWidth
             label="Password"
+            name="password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
             margin="normal"
             required
           />
@@ -94,13 +88,8 @@ export default function LoginForm() {
             fullWidth
             sx={{ mt: 3 }}
           >
-            Sign In
+            Login
           </Button>
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Link component={RouterLink} to="/signup">
-              Don't have an account? Sign up
-            </Link>
-          </Box>
         </form>
       </Paper>
     </Box>

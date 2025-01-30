@@ -14,7 +14,7 @@ using ImsMonitoring.Models;
 namespace ImsMonitoring.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _configuration;
@@ -35,18 +35,15 @@ namespace ImsMonitoring.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
-                return Unauthorized("Invalid credentials");
-
-            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
-            if (!result.Succeeded)
-                return Unauthorized("Invalid credentials");
-
-            var token = GenerateJwtToken(user);
-            return Ok(new { token });
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+            {
+                var token = GenerateJwtToken(user);
+                return Ok(new { token });
+            }
+            return Unauthorized("Invalid email or password");
         }
 
         [HttpPost("register")]
@@ -69,9 +66,9 @@ namespace ImsMonitoring.Controllers
         {
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
@@ -81,7 +78,7 @@ namespace ImsMonitoring.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddDays(1),
+                expires: DateTime.Now.AddDays(7),
                 signingCredentials: creds
             );
 
