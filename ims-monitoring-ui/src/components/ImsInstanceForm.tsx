@@ -12,6 +12,14 @@ interface FormData {
   notes: string;
 }
 
+interface ValidationErrors {
+  name?: string;
+  baseUrl?: string;
+  programCode?: string;
+  email?: string;
+  password?: string;
+}
+
 export default function ImsInstanceForm() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -23,21 +31,74 @@ export default function ImsInstanceForm() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [testing, setTesting] = useState(false);
+
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+    }
+
+    if (!formData.baseUrl.trim()) {
+      errors.baseUrl = 'Base URL is required';
+    } else if (!/^https?:\/\/.+/.test(formData.baseUrl)) {
+      errors.baseUrl = 'Base URL must start with http:// or https://';
+    }
+
+    if (!formData.programCode.trim()) {
+      errors.programCode = 'Program code is required';
+    } else if (formData.programCode.length !== 5) {
+      errors.programCode = 'Program code must be exactly 5 characters';
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Invalid email format';
+    }
+
+    if (!formData.password.trim()) {
+      errors.password = 'Password is required';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const testConnection = async () => {
+    setTesting(true);
+    setError(null);
+    try {
+      // First test the login to get a token
+      const response = await api.post('/imsinstances/test-connection', {
+        baseUrl: formData.baseUrl,
+        programCode: formData.programCode,
+        email: formData.email,
+        password: formData.password
+      });
+      
+      setSuccess('Connection test successful! Token received: ' + response.data.token);
+    } catch (err: any) {
+      console.error('Connection test failed:', err);
+      setError(err.response?.data?.message || 'Failed to test connection to IMS');
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
 
+    if (!validateForm()) {
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Not authenticated');
-        return;
-      }
-
-      const decoded: any = jwtDecode(token);
-
+      // Ensure baseUrl ends with a forward slash
       const baseUrl = formData.baseUrl.endsWith('/') 
         ? formData.baseUrl 
         : `${formData.baseUrl}/`;
@@ -53,6 +114,7 @@ export default function ImsInstanceForm() {
 
       setSuccess('IMS instance added successfully');
       
+      // Clear form
       setFormData({
         name: '',
         baseUrl: '',
@@ -64,13 +126,7 @@ export default function ImsInstanceForm() {
     } catch (err: any) {
       console.error('Full error:', err);
       console.error('Response data:', err.response?.data);
-      
-      const errorMessage = err.response?.data?.title || 
-                          err.response?.data?.message || 
-                          err.response?.data || 
-                          'Failed to add IMS instance';
-      
-      setError(errorMessage);
+      setError(err.response?.data?.message || 'Failed to add IMS instance');
     }
   };
 
